@@ -1,0 +1,98 @@
+<!DOCTYPE HTML>
+
+<head>
+	<title>Upload image to OCR engine</title>
+	<link rel="stylesheet" href="http://h5ui.io/css/h5ui.min.css">
+</head>
+
+<body>
+	<script>
+		var keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+
+		function encode64(input) {
+			var output = "";
+			var chr1, chr2, chr3 = "";
+			var enc1, enc2, enc3, enc4 = "";
+			var i = 0;
+
+			do {
+				chr1 = input.charCodeAt(i++);
+				chr2 = input.charCodeAt(i++);
+				chr3 = input.charCodeAt(i++);
+
+				enc1 = chr1 >> 2;
+				enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+				enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+				enc4 = chr3 & 63;
+
+				if(isNaN(chr2)) {
+					enc3 = enc4 = 64;
+				} else if(isNaN(chr3)) {
+					enc4 = 64;
+				}
+
+				output = output +
+					keyStr.charAt(enc1) +
+					keyStr.charAt(enc2) +
+					keyStr.charAt(enc3) +
+					keyStr.charAt(enc4);
+				chr1 = chr2 = chr3 = "";
+				enc1 = enc2 = enc3 = enc4 = "";
+			} while (i < input.length);
+
+			return output;
+		}
+
+		function uploadAndSubmit() {
+			var form = document.forms["post2OCR"];
+
+			if(form["file"].files.length > 0) {
+				var file = form["file"].files[0];
+				// try sending 
+				var reader = new FileReader();
+
+				reader.onloadend = function() {
+					if(reader.error) {
+						console.log(reader.error);
+					} else {
+						var xhr = new XMLHttpRequest();
+						xhr.open( /* method */ "POST",
+							/* target url */
+							"/ocr"
+							/*, async, default to true */
+						);
+						xhr.overrideMimeType("application/octet-stream");
+						xhr.send(encode64(reader.result));
+						xhr.onreadystatechange = function() {
+							if(xhr.readyState == 4) {
+								if(xhr.status == 200) {
+									console.log("upload complete");
+									console.log("response: " + xhr.responseText);
+								}
+							}
+						}
+					}
+				}
+
+				reader.readAsBinaryString(file);
+			} else {
+				alert("Please choose a file.");
+			}
+		}
+	</script>
+	<div class="h5ui-group h5ui-uploader">
+		<h5 class="h5ui-uploader_title">
+            Upload a picture to OCR engine:
+        </h5>
+		<form name="post2OCR" id="post2OCR" method="post" enctype="multipart/form-data" action="javascript: uploadAndSubmit();">
+			<p>
+				<div class="">
+					<div class="h5ui-uploader_btn_border"></div>
+					<input id="file" type="file" multiple="" accept="image/jpeg,image/png,image/bmp">
+				</div>
+			</p>
+			<p><input type="submit" value="Submit" /></p>
+		</form>
+		<div class="clearfix"></div>
+	</div>
+</body>
