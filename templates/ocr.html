@@ -63,6 +63,7 @@
 						);
 						xhr.overrideMimeType("application/octet-stream");
 						xhr.send(encode64(reader.result));
+                        document.getElementById("result").innerHTML = "Waiting for response...";
 						xhr.onreadystatechange = function() {
 							if(xhr.readyState == 4) {
 								if(xhr.status == 200) {
